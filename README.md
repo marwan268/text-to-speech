@@ -1,54 +1,129 @@
 # Python Text-to-Speech
 
-A small command-line program that turns a UTF-8 text file into one MP3 using [gTTS](https://pypi.org/project/gTTS/) (Google Text-to-Speech).
+A small command-line program that turns a UTF-8 text file into one MP3 using Google Text-to-Speech or Microsoft Edge neural voices.
 
 It includes English and French phrase lists. The program reads the whole selected file and generates one audio file. It needs an internet connection while generating speech.
 
 ## Requirements
 
 - Python 3.8 or newer
-- The Python package in `requirements.txt`
-- `ffmpeg` for changing the generated audio speed to anything other than `1x`
+- Internet access while creating speech
+- `ffmpeg` only when using Google TTS at a speed other than `1x`
 
-## Setup
+## First-time setup on Ubuntu or Debian Linux
 
-Open a terminal in this project directory and install the Python dependency:
+Open a terminal in this project directory. Install the package that lets Python create a virtual environment:
 
 ```bash
+sudo apt update
+sudo apt install python3-venv
+```
+
+If that command says the package is unavailable and Python reports a specific version, install the matching package instead. For example, a Python 3.14 installation uses:
+
+```bash
+sudo apt install python3.14-venv
+```
+
+Create this project's virtual environment, activate it, and install the required Python libraries:
+
+```bash
+python3 -m venv tts_env
+source tts_env/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-On Windows, use `py -m pip install -r requirements.txt` if `python` is not the Python launcher on your system.
+`(tts_env)` at the beginning of the terminal prompt means the environment is active. Run all following `python` commands while it is active.
 
-To use speeds other than `1x`, install `ffmpeg` and make sure the `ffmpeg` command is available in your terminal's `PATH`.
+To use Google TTS at a speed other than `1x`, install ffmpeg:
+
+```bash
+sudo apt install ffmpeg
+```
+
+### Recreate the environment
+
+If `tts_env` was copied or moved from a different folder, recreate it. This deletes only the installed Python libraries in `tts_env`; it does not delete your text files or MP3 files.
+
+```bash
+deactivate
+rm -r tts_env
+python3 -m venv tts_env
+source tts_env/bin/activate
+python -m pip install -r requirements.txt
+```
+
+If `deactivate` says it is not found, skip that line and run the rest of the commands.
 
 ## Usage
 
-Run the program from the project directory. If you do not provide paths, it picks `phrases_<language>.txt` as the input and writes `all_phrases_<language>.mp3`.
+Run the program from the project directory. Put the input text filename directly after `text_to_speech.py`; the program uses the same filename with `.mp3` as the output. For example, `my_french_text.txt` creates `my_french_text.mp3`.
 
-### French
+### Google TTS: French
 
 ```bash
 python text_to_speech.py --lang fr
 ```
 
-This reads `phrases_fr.txt` and creates `all_phrases_fr.mp3`.
+This reads `phrases_fr.txt` and creates `phrases_fr.mp3`.
 
-### English
+### Google TTS: English
 
 ```bash
 python text_to_speech.py --lang en
 ```
 
-This reads `phrases_en.txt` and creates `all_phrases_en.mp3`.
+This reads `phrases_en.txt` and creates `phrases_en.mp3`.
 
-### Choose another input or output file
+### Microsoft Edge neural voices
+
+Use `--engine edge` for more natural-sounding online voices. The script selects a suitable default voice for English and French; it does not need `ffmpeg`, including when you use `--speed`.
 
 ```bash
-python text_to_speech.py --lang fr --input my_text.txt --output french_audio.mp3
+# French: fr-FR-DeniseNeural
+python text_to_speech.py --engine edge --lang fr
+
+# English: en-US-AriaNeural
+python text_to_speech.py --engine edge --lang en
 ```
 
-The input file must be saved as UTF-8. The language value is a gTTS language code, such as `fr` for French or `en` for English.
+Select another Microsoft voice with `--voice`:
+
+```bash
+python text_to_speech.py --engine edge --lang fr --voice fr-FR-HenriNeural
+```
+
+For a French male voice, this full command reads `phrases_fr.txt` and saves the result as `lesson_audio.mp3`:
+
+```bash
+python text_to_speech.py phrases_fr.txt --engine edge --lang fr --voice fr-FR-HenriNeural --output lesson_audio.mp3
+```
+
+For an English male voice, use `en-US-GuyNeural`:
+
+```bash
+python text_to_speech.py phrases_en.txt --engine edge --lang en --voice en-US-GuyNeural
+```
+
+View every available Edge voice with:
+
+```bash
+edge-tts --list-voices
+```
+
+### Choose an input file
+
+```bash
+python text_to_speech.py my_text.txt --engine edge --lang fr
+```
+
+This reads `my_text.txt` and creates `my_text.mp3`. The input file must be saved as UTF-8. The language value is a gTTS language code, such as `fr` for French or `en` for English.
+
+To choose a different MP3 filename, use `--output`:
+
+```bash
+python text_to_speech.py my_text.txt --engine edge --lang fr --output french_audio.mp3
+```
 
 ### Audio speed
 
@@ -60,7 +135,7 @@ python text_to_speech.py --lang en --speed 1.5
 python text_to_speech.py --lang en --speed 2.0
 ```
 
-`1.0` is normal speed, `1.5` is 50% faster, and `2.0` is twice as fast. `--speed` values other than `1.0` require `ffmpeg`.
+`1.0` is normal speed, `1.5` is 50% faster, and `2.0` is twice as fast. With Google TTS, `--speed` values other than `1.0` require `ffmpeg`. Microsoft Edge TTS changes its speaking rate directly, so it does not need `ffmpeg`.
 
 The `--slow` option asks gTTS to generate its slower speech option:
 
@@ -73,9 +148,12 @@ You can combine it with `--speed`; gTTS generates the slower version first, then
 ## All options
 
 ```text
---input, -i    UTF-8 text file (default: phrases_<lang>.txt)
---output, -o   MP3 output path (default: all_phrases_<lang>.mp3)
+input_file      Optional input text filename; default output has the same name with .mp3
+--input, -i     Alternative way to provide the input text filename
+--output, -o    MP3 output path; default uses the input filename with .mp3
 --lang, -l     gTTS language code (default: fr)
+--engine        Speech engine: gtts (Google) or edge (Microsoft neural voices)
+--voice          Microsoft Edge voice, used only with --engine edge
 --speed        Playback rate from 0.5 to 2.0 (default: 1.0)
 --slow         Use gTTS's slower speech option
 ```
