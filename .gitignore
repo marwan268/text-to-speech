@@ -1,0 +1,20 @@
+# Python bytecode and local virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+tts_env/
+
+# Generated audio files
+*.mp3
+*.wav
+*.ogg
+
+# Local environment and editor files
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
